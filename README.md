@@ -1,2 +1,55 @@
-# mc-proxy
-Simple and lightweigth network proxy for managing minecraft servers written in pure C.
+# MC-Proxy
+
+MC-Proxy is a simple and lightweight network proxy for managing Minecraft servers, written in pure C.
+
+## Features
+
+- Lightweight and efficient
+- Handles multiple connections simultaneously
+- Logs connections and errors
+- Resolves hostnames
+
+## Configuration
+
+The `servers.conf` file is used to configure the network proxy. Each line in the file represents a server configuration. The format of each line is as follows:
+
+```properties
+#server FQDN                    destination
+```
+
+- `server FQDN`: This is the Fully Qualified Domain Name (FQDN) that the proxy will listen for. You can use a wildcard (*) to match any subdomain. For example, ``*.domain.example`` will match any subdomain of ``domain.example``.
+
+- `destination`: This is the IP address and port number that the proxy will forward the traffic to. The format is ``IP:Port``, if the port is not provided, ``25565`` is going be used as a default port.
+
+To add a new server, simply add a new line to the `servers.conf` file with the server FQDN and the destination IP and port. To remove a server entry, simply delete its line from the file.
+
+An example can be seen in [servers.conf](/servers.conf) file.
+
+## Getting Started
+
+### Prerequisites
+
+- GCC or any C compiler
+- Make
+
+### Building
+
+To build the project, run the following command in the project root directory:
+
+```bash
+make
+```
+
+This will compile the source files and generate the executable.
+
+### Running
+
+To run the server, use the following command:
+
+```bash
+./bin/proxy
+```
+
+## Contributing
+
+Contributions are welcome. Please fork the repository and create a pull request with your changes.
