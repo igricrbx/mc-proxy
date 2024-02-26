@@ -1,3 +1,5 @@
+![mcproxy](https://github.com/igricrbx/mc-proxy/assets/114947694/444624eb-bcce-44cb-845e-89cb8a42405d)
+
 # MC-Proxy
 
 MC-Proxy is a simple and lightweight network proxy for managing Minecraft servers, written in pure C.
