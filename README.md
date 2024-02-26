@@ -17,6 +17,10 @@ The `servers.conf` file is used to configure the network proxy. Each line in the
 
 ```properties
 #server FQDN                    destination
+survival.domain.example         10.0.1.123:5001
+creative.domain.example         10.0.1.123:5002
+wynncraft.domain.example        wynncraft.com
+*.domain.example                2b2t.org
 ```
 
 - `server FQDN`: This is the Fully Qualified Domain Name (FQDN) that the proxy will listen for. You can use a wildcard (*) to match any subdomain. For example, ``*.domain.example`` will match any subdomain of ``domain.example``.
