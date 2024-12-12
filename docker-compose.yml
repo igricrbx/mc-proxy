@@ -1,0 +1,12 @@
+services:
+  mc-proxy:
+    container_name: mc-proxy
+    volumes:
+      - ~/servers.conf:/app/servers.conf:ro
+      - /etc/localtime:/etc/localtime:ro
+      - /etc/timezone:/etc/timezone:ro
+    network_mode: host
+    restart: unless-stopped
+    build:
+      context: .
+      dockerfile: Dockerfile
