@@ -163,6 +163,7 @@ void *handle_client(void *arg) {
 
     // Not a valid packet
     if (strlen(server_ip_address) == 0) {
+        printf("Malformed packet received\n");
         return NULL;
     }
 
@@ -197,6 +198,11 @@ void *handle_client(void *arg) {
 
     // Check if the packet is a login packet, meaning the player is attempting to join the server
     int is_login_packet = parseLoginPacket(buffer, username);
+
+    if (is_login_packet == -1) {
+        printf("Malformed packet received\n");
+        return NULL;
+    }
 
     // Log the connection if the player is trying to join the server
     if (is_login_packet) {

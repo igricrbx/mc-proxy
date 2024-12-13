@@ -108,6 +108,10 @@ void parseHandshakePacket(char* buffer, char* server_address) {
 
     int address_length = parseVarInt(buffer, &cursor);
 
+    if (address_length >= 256) {
+        return;
+    }
+
     memcpy(server_address, buffer + cursor, address_length);
     server_address[address_length] = '\0';
 }
@@ -118,6 +122,11 @@ int parseLoginPacket(char* buffer, char* username) {
 
     if (state == STATE_LOGIN) {
         int username_len = buffer[payload_len + 3];
+
+        if (username_len >= 32) {
+            return -1;
+        }
+
         memcpy(username, &buffer[payload_len + 4], username_len);
         username[username_len] = '\0';
         return 1;
