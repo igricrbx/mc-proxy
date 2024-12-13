@@ -8,13 +8,13 @@
 
 void parse_dns_response(const unsigned char *response, char *domain, int max_len)
 {
-    int i = 0;
-    int j = 0;
+    size_t i = 0;
+    size_t j = 0;
     while (response[i] != 0)
     {
-        int len = response[i++];
+        size_t len = response[i++];
 
-        for (int end = i + len; i < end; i++, j++)
+        for (size_t end = i + len; i < end; i++, j++)
         {
             if (j < max_len - 1)
             {
@@ -43,9 +43,9 @@ int dns_query(char *fqdn, char *address)
     unsigned char response[NS_PACKETSZ]; // Buffer for the DNS response
     ns_msg msg;                          // Structure for the DNS message
     ns_rr rr;                            // Structure for the DNS resource record
-    int len;
+    size_t len;
 
-    int depth = 0;
+    size_t depth = 0;
 
     char domain_name[256];
     domain_name[0] = "\0";
@@ -61,7 +61,7 @@ int dns_query(char *fqdn, char *address)
             return -1;
         }
 
-        for (int i = ns_msg_count(msg, ns_s_an) - 1; i >= 0; i--)
+        for (size_t i = ns_msg_count(msg, ns_s_an) - 1; i >= 0; i--)
         {
             if (ns_parserr(&msg, ns_s_an, i, &rr))
             {
@@ -97,7 +97,7 @@ int dns_query(char *fqdn, char *address)
             return 1;
         }
         
-        for (int i = ns_msg_count(msg, ns_s_an) - 1; i >= 0; i--)
+        for (size_t i = ns_msg_count(msg, ns_s_an) - 1; i >= 0; i--)
         {
             if (ns_parserr(&msg, ns_s_an, i, &rr))
             {

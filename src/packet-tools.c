@@ -48,8 +48,8 @@ char* resolve_hostname(const char* hostname) {
         return NULL;
     }
 
-    int lru_index = 0;
-    for (int i = 0; i < CACHE_SIZE; ++i) {
+    size_t lru_index = 0;
+    for (size_t i = 0; i < CACHE_SIZE; ++i) {
         if (dns_cache[i].hostname == NULL) {
             lru_index = i;
             break;
@@ -67,12 +67,12 @@ char* resolve_hostname(const char* hostname) {
     return strdup(ip_address);
 }
 
-int parseVarInt(char* buffer, int* cursor) {
-    int position = 0;
+int parseVarInt(char* buffer, size_t* cursor) {
+    size_t position = 0;
     int value = 0;
 
     while (1) {
-        unsigned int byte = buffer[(*cursor)++];
+        size_t byte = buffer[(*cursor)++];
 
         value |= (byte & 0x7F) << (position);
 
@@ -91,8 +91,8 @@ int parseVarInt(char* buffer, int* cursor) {
 }
 
 void parseHandshakePacket(char* buffer, char* server_address) {
-    int cursor = 0;
-    int packet_length = parseVarInt(buffer, &cursor);
+    size_t cursor = 0;
+    size_t packet_length = parseVarInt(buffer, &cursor);
     
     if (cursor < 1) {
         return;
@@ -106,7 +106,7 @@ void parseHandshakePacket(char* buffer, char* server_address) {
 
     int version = parseVarInt(buffer, &cursor);
 
-    int address_length = parseVarInt(buffer, &cursor);
+    size_t address_length = parseVarInt(buffer, &cursor);
 
     if (address_length >= 256) {
         return;
@@ -117,11 +117,11 @@ void parseHandshakePacket(char* buffer, char* server_address) {
 }
 
 int parseLoginPacket(char* buffer, char* username) {
-    int payload_len = buffer[0];
+    size_t payload_len = buffer[0];
     int state = buffer[payload_len];
 
     if (state == STATE_LOGIN) {
-        int username_len = buffer[payload_len + 3];
+        size_t username_len = buffer[payload_len + 3];
 
         if (username_len >= 32) {
             return -1;

@@ -7,7 +7,7 @@
 pthread_mutex_t serversMutex;
 
 Entry* dictionary = NULL;
-int dictionary_size = 0;
+size_t dictionary_size = 0;
 
 
 char* trim_leading_whitespace(char* str) {
@@ -63,7 +63,7 @@ void load_dictionary(const char* filename) {
 Entry* find_entry(const char* key) {
     pthread_mutex_lock(&serversMutex);
 
-    for (int i = 0; i < dictionary_size; i++) {
+    for (size_t i = 0; i < dictionary_size; i++) {
         if (strcmp(dictionary[i].hostname, key) == 0) {
             pthread_mutex_unlock(&serversMutex);
             return &dictionary[i];
@@ -76,7 +76,7 @@ Entry* find_entry(const char* key) {
         char wildcard_hostname[256];
         snprintf(wildcard_hostname, sizeof(wildcard_hostname), "*%s", domain);
 
-        for (int i = 0; i < dictionary_size; i++) {
+        for (size_t i = 0; i < dictionary_size; i++) {
             if (strcmp(dictionary[i].hostname, wildcard_hostname) == 0) {
                 pthread_mutex_unlock(&serversMutex);
                 return &dictionary[i];
