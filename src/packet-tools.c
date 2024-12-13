@@ -11,13 +11,16 @@
 struct CacheEntry dns_cache[CACHE_SIZE];
 
 char* resolve_hostname(const char* hostname) {
-
     struct sockaddr_in sa;
     int result = inet_pton(AF_INET, hostname, &(sa.sin_addr));
     // if the hostname is already an IP address, no need to query the DNS
     if (result != 0)
     {
         return strdup(hostname);
+    }
+    // localhost should resolve to 127.0.0.1
+    if (!strcmp(hostname, "localhost")) {
+        return strdup("127.0.0.1");
     }
 
     time_t now = time(NULL);

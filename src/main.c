@@ -264,6 +264,8 @@ void sigint_handler(int) {
 }
 
 int main() {
+    setbuf(stdout, NULL);
+
     printf("The server proxy is starting\n");
 
     // Initialize mutexes and logging mechanisms
