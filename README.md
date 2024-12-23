@@ -16,14 +16,15 @@ MC-Proxy is a simple and lightweight network proxy for managing Minecraft server
 The `servers.conf` file is used to configure the network proxy. Each line in the file represents a server configuration. The format of each line is as follows:
 
 ```properties
-#server FQDN                    destination
+#server FQDN / IP               destination
 survival.domain.example         10.0.1.123:5001
 creative.domain.example         10.0.1.123:5002
 wynncraft.domain.example        wynncraft.com
 *.domain.example                2b2t.org
+10.0.0.1.123                    10.0.1.123:5003
 ```
 
-- `server FQDN`: This is the Fully Qualified Domain Name (FQDN) that the proxy will listen for. You can use a wildcard (*) to match any subdomain. For example, ``*.domain.example`` will match any subdomain of ``domain.example``.
+- `server FQDN / IP`: This is the Fully Qualified Domain Name (FQDN) or IP address that the proxy will listen for. You can use a wildcard (*) to match any subdomain. For example, ``*.domain.example`` will match any subdomain of ``domain.example``.
 
 - `destination`: This is the IP address and port number that the proxy will forward the traffic to. The format is ``IP:Port``, if the port is not provided, ``25565`` is going be used as a default port.
 
