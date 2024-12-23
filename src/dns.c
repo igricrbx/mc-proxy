@@ -48,7 +48,7 @@ int dns_query(char *fqdn, char *address)
     size_t depth = 0;
 
     char domain_name[256];
-    domain_name[0] = "\0";
+    domain_name[0] = '\0';
     strncat(domain_name, fqdn, 255);
 
     if (!((len = res_query((const char *)domain_name, ns_c_in, ns_t_srv, response, sizeof(response))) < 0))
@@ -76,7 +76,7 @@ int dns_query(char *fqdn, char *address)
 
                 char target[256];
                 parse_dns_response(ns_rr_rdata(rr) + 6, target, sizeof(target));
-                domain_name[0] = "\0";
+                domain_name[0] = '\0';
                 strncat(domain_name, target, 255);
                 break;
             }
@@ -117,7 +117,7 @@ int dns_query(char *fqdn, char *address)
             {
                 char domain[256];
                 parse_dns_response(ns_rr_rdata(rr), domain, sizeof(domain));
-                domain_name[0] = "\0";
+                domain_name[0] = '\0';
                 strncat(domain_name, domain, 255);
                 ++depth;
                 break;

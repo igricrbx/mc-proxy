@@ -38,7 +38,7 @@ char* resolve_hostname(const char* hostname) {
 
     // append _minecraft._tcp. to the hostname
     char srv_hostname[256];
-    srv_hostname[0] = "\0";
+    srv_hostname[0] = '\0';
     strncat(srv_hostname, "_minecraft._tcp.", 255);
     strncat(srv_hostname, hostname, 255);
 
