@@ -11,7 +11,7 @@ struct CacheEntry {
     time_t last_used;
 };
 
-int parseVarInt(char* buffer, int* cursor);
+int parseVarInt(char* buffer, size_t* cursor);
 void parseHandshakePacket(char* buffer, char* server_address);
 int parseLoginPacket(char* buffer, char* username);
 char* resolve_hostname(const char* hostname);

@@ -151,7 +151,7 @@ void *handle_client(void *arg) {
     char server_ip_address[256] = {0};
 
     // Receive the packet from the client
-    int bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
+    ssize_t bytes_received = recv(client_socket, buffer, sizeof(buffer), 0);
 
     // Connection closed by the client
     if (bytes_received <= 0) {
@@ -163,6 +163,7 @@ void *handle_client(void *arg) {
 
     // Not a valid packet
     if (strlen(server_ip_address) == 0) {
+        printf("Malformed packet received\n");
         return NULL;
     }
 
@@ -198,6 +199,11 @@ void *handle_client(void *arg) {
     // Check if the packet is a login packet, meaning the player is attempting to join the server
     int is_login_packet = parseLoginPacket(buffer, username);
 
+    if (is_login_packet == -1) {
+        printf("Malformed packet received\n");
+        return NULL;
+    }
+
     // Log the connection if the player is trying to join the server
     if (is_login_packet) {
         log_connect(username, client_socket, server_ip_address, resolved_address, LOG_CONNECTED);
@@ -225,14 +231,14 @@ void *handle_client(void *arg) {
 
         // Forward the packet from the client to the server
         if (FD_ISSET(client_socket, &set)) {
-            int bytes = read(client_socket, buffer, sizeof(buffer));
+            ssize_t bytes = read(client_socket, buffer, sizeof(buffer));
             if (bytes <= 0) break;
             if (write(server_socket, buffer, bytes) <= 0) break;
         }
 
         // Forward the packet from the server to the client
         if (FD_ISSET(server_socket, &set)) {
-            int bytes = read(server_socket, buffer, sizeof(buffer));
+            ssize_t bytes = read(server_socket, buffer, sizeof(buffer));
             if (bytes <= 0) break;
             if (write(client_socket, buffer, bytes) <= 0) break;
         }

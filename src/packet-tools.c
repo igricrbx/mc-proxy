@@ -38,8 +38,9 @@ char* resolve_hostname(const char* hostname) {
 
     // append _minecraft._tcp. to the hostname
     char srv_hostname[256];
-    strcpy(srv_hostname, "_minecraft._tcp.");
-    strcat(srv_hostname, hostname);
+    srv_hostname[0] = '\0';
+    strncat(srv_hostname, "_minecraft._tcp.", 255);
+    strncat(srv_hostname, hostname, 255);
 
     char ip_address[16];
 
@@ -47,8 +48,8 @@ char* resolve_hostname(const char* hostname) {
         return NULL;
     }
 
-    int lru_index = 0;
-    for (int i = 0; i < CACHE_SIZE; ++i) {
+    size_t lru_index = 0;
+    for (size_t i = 0; i < CACHE_SIZE; ++i) {
         if (dns_cache[i].hostname == NULL) {
             lru_index = i;
             break;
@@ -66,12 +67,12 @@ char* resolve_hostname(const char* hostname) {
     return strdup(ip_address);
 }
 
-int parseVarInt(char* buffer, int* cursor) {
-    int position = 0;
+int parseVarInt(char* buffer, size_t* cursor) {
+    size_t position = 0;
     int value = 0;
 
     while (1) {
-        unsigned int byte = buffer[(*cursor)++];
+        size_t byte = buffer[(*cursor)++];
 
         value |= (byte & 0x7F) << (position);
 
@@ -90,8 +91,8 @@ int parseVarInt(char* buffer, int* cursor) {
 }
 
 void parseHandshakePacket(char* buffer, char* server_address) {
-    int cursor = 0;
-    int packet_length = parseVarInt(buffer, &cursor);
+    size_t cursor = 0;
+    size_t packet_length = parseVarInt(buffer, &cursor);
     
     if (cursor < 1) {
         return;
@@ -105,18 +106,27 @@ void parseHandshakePacket(char* buffer, char* server_address) {
 
     int version = parseVarInt(buffer, &cursor);
 
-    int address_length = parseVarInt(buffer, &cursor);
+    size_t address_length = parseVarInt(buffer, &cursor);
+
+    if (address_length >= 256) {
+        return;
+    }
 
     memcpy(server_address, buffer + cursor, address_length);
     server_address[address_length] = '\0';
 }
 
 int parseLoginPacket(char* buffer, char* username) {
-    int payload_len = buffer[0];
+    size_t payload_len = buffer[0];
     int state = buffer[payload_len];
 
     if (state == STATE_LOGIN) {
-        int username_len = buffer[payload_len + 3];
+        size_t username_len = buffer[payload_len + 3];
+
+        if (username_len >= 32) {
+            return -1;
+        }
+
         memcpy(username, &buffer[payload_len + 4], username_len);
         username[username_len] = '\0';
         return 1;
