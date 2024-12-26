@@ -1,19 +1,11 @@
 #ifndef PACKET_TOOLS_H
 #define PACKET_TOOLS_H
 
-#include <time.h>
+#include <string.h>
+#include <sys/types.h>
 
-#define CACHE_SIZE 16
-
-struct CacheEntry {
-    char* hostname;
-    char* ip_address;
-    time_t last_used;
-};
-
-int parseVarInt(char* buffer, size_t* cursor);
+ssize_t parseVarInt(char* buffer, ssize_t* cursor);
 void parseHandshakePacket(char* buffer, char* server_address);
 int parseLoginPacket(char* buffer, char* username);
-char* resolve_hostname(const char* hostname);
 
 #endif // PACKET_TOOLS_H

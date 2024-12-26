@@ -1,9 +1,3 @@
-#include <stdio.h>
-#include <time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <unistd.h>
-
 #include "logger.h"
 
 #define DATE_FORMAT "%Y-%m-%d"
@@ -13,12 +7,12 @@
 // Read/Write
 #define MKDIR_MODE 0600 
 
-pthread_mutex_t loggerMutex;
+pthread_mutex_t logger_mutex;
 
 char log_file[256];
 int log_file_day = 0;
 
-void log_refresh_file() {
+ssize_t log_refresh_file() {
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
 
@@ -30,25 +24,30 @@ void log_refresh_file() {
 
     struct stat st = {0};
     if (stat("logs", &st) == -1) {
-        mkdir("logs", MKDIR_MODE);
+        return mkdir("logs", MKDIR_MODE);
     }
+    return 0;
 }
 
 void log_message(const char *message) {
-    pthread_mutex_lock(&loggerMutex);
+    pthread_mutex_lock(&logger_mutex);
 
     time_t now = time(NULL);
     struct tm *tm = localtime(&now);
 
     if (tm->tm_mday != log_file_day) {
-        log_refresh_file();
+        if (log_refresh_file() < 0) {
+            perror("Error creating log file");
+            pthread_mutex_unlock(&logger_mutex);
+            return;
+        }
     }
 
     FILE* file = fopen(log_file, "a");
 
     if (file == NULL) {
         perror("Error opening log file");
-        pthread_mutex_unlock(&loggerMutex);
+        pthread_mutex_unlock(&logger_mutex);
         return;
     }
 
@@ -58,12 +57,20 @@ void log_message(const char *message) {
     fprintf(file, "%s: %s\n", time_str, message);
     fclose(file);
 
-    pthread_mutex_unlock(&loggerMutex);
+    pthread_mutex_unlock(&logger_mutex);
 }
 
-void log_init() {
-    log_refresh_file();
+ssize_t log_init() {
+    if (log_refresh_file() < 0) {
+        perror("Error creating log file");
+        return -1;
+    }
+    if (pthread_mutex_init(&logger_mutex, NULL) != 0) {
+        perror("Error creating logger mutex");
+        return -1;
+    }
     log_message("Server initialized");
+    return 0;
 }
 
 void log_shutdown() {
@@ -71,15 +78,15 @@ void log_shutdown() {
 }
 
 
-void log_error(const char *message) {
-    char error_message[256];
+void log_error(const char* const message) {
+    char error_message[512];
     sprintf(error_message, "[ERROR]: %s", message);
     log_message(error_message);
 }
 
 
 void log_connection(const char *username, const char *client_ip, const char *server_ip_address, const char *resolved_address, enum LogConnectionType connection_type) {
-    char message[256];
+    char message[512];
     if (connection_type == LOG_CONNECTED) {
         sprintf(message, "Client %s (%s) connected to %s (%s)", username, client_ip, server_ip_address, resolved_address);
     } else {

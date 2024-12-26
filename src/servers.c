@@ -1,13 +1,14 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "servers.h"
 
-pthread_mutex_t serversMutex;
+pthread_mutex_t servers_mutex;
 
-Entry* dictionary = NULL;
-size_t dictionary_size = 0;
+typedef struct {
+    Entry* items;
+    size_t count;
+    size_t capacity;
+} Dictionary;
+
+Dictionary dictionary = {0};
 
 
 char* trim_leading_whitespace(char* str) {
@@ -17,74 +18,95 @@ char* trim_leading_whitespace(char* str) {
     return str;
 }
 
-void add_entry(char* key, char* value, short port) {
-    dictionary = realloc(dictionary, sizeof(Entry) * (dictionary_size + 1));
-    if (dictionary == NULL) {
-        printf("Failed to allocate memory for dictionary\n");
-        return;
+ssize_t add_entry(const char* const source, const char* const destination, const short port) {
+    if (dictionary.count >= dictionary.capacity) {
+        if (dictionary.capacity == 0) {
+            dictionary.capacity = 8;
+        } else {
+            dictionary.capacity *= 2;
+        }
+        dictionary.items = realloc(dictionary.items, sizeof(Entry) * dictionary.capacity);
+        if (dictionary.items == NULL) {
+            perror("Error allocating memory");
+            return -1;
+        }
     }
+    
+    strncpy(dictionary.items[dictionary.count].source, source, sizeof(dictionary.items[dictionary.count].source));
+    strncpy(dictionary.items[dictionary.count].destination, destination, sizeof(dictionary.items[dictionary.count].destination));
+    dictionary.items[dictionary.count].port = port;
 
-    dictionary[dictionary_size].hostname = key;
-    dictionary[dictionary_size].destination = value;
-    dictionary[dictionary_size].port = port;
-    ++dictionary_size;
+    ++dictionary.count;
+    return 0;
 }
 
 
-void load_dictionary(const char* filename) {
+ssize_t load_dictionary(const char* filename) {
     FILE* file = fopen(filename, "r");
     if (file == NULL) {
-        perror("fopen");
-        return;
+        printf("Failed to open the file\n");
+        return -1;
+    }
+
+    if (pthread_mutex_init(&servers_mutex, NULL) != 0) {
+        perror("Error creating servers mutex");
+        return -1;
     }
 
     char* line = NULL;
-    size_t len = 0;
+    size_t len;
     while (getline(&line, &len, file) != -1) {
         if (line[0] == '#') {
             continue;
         }
 
-        char* key = strtok(line, " \t");
+        char* source = strtok(line, " \t");
         char* value = strtok(NULL, "\n");
-        if (key && value) {
+        if (source && value) {
             char* destination = strtok(value, ":");
             destination = trim_leading_whitespace(destination);
             char* port_str = strtok(NULL, "");
             short port = port_str ? atoi(port_str) : 25565;
-            add_entry(strdup(key), strdup(destination), port);
+            if (add_entry(source, destination, port) < 0) {
+                perror("Error adding entry");
+                return -1;
+            }
         }
     }
 
-    free(line);
-    fclose(file);
+    if (fclose(file) != 0) {
+        perror("Error closing the file");
+        return -1;
+    }
+
+    return 0;
 }
 
 Entry* find_entry(const char* key) {
-    pthread_mutex_lock(&serversMutex);
+    pthread_mutex_lock(&servers_mutex);
 
-    for (size_t i = 0; i < dictionary_size; i++) {
-        if (strcmp(dictionary[i].hostname, key) == 0) {
-            pthread_mutex_unlock(&serversMutex);
-            return &dictionary[i];
+    for (size_t i = 0; i < dictionary.count; i++) {
+        if (strcmp(dictionary.items[i].source, key) == 0) {
+            pthread_mutex_unlock(&servers_mutex);
+            return &dictionary.items[i];
         }
     }
 
     // Wildcard match
     char* domain = strchr(key, '.');
     if (domain) {
-        char wildcard_hostname[256];
-        snprintf(wildcard_hostname, sizeof(wildcard_hostname), "*%s", domain);
+        char wildcard_source[256];
+        snprintf(wildcard_source, sizeof(wildcard_source), "*%s", domain);
 
-        for (size_t i = 0; i < dictionary_size; i++) {
-            if (strcmp(dictionary[i].hostname, wildcard_hostname) == 0) {
-                pthread_mutex_unlock(&serversMutex);
-                return &dictionary[i];
+        for (size_t i = 0; i < dictionary.count; i++) {
+            if (strcmp(dictionary.items[i].source, wildcard_source) == 0) {
+                pthread_mutex_unlock(&servers_mutex);
+                return &dictionary.items[i];
             }
         }
     }
 
-    pthread_mutex_unlock(&serversMutex);
+    pthread_mutex_unlock(&servers_mutex);
 
     return NULL;
 }

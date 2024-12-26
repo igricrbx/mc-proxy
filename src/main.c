@@ -1,19 +1,7 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdint.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <arpa/inet.h>
-#include <string.h>
-#include <pthread.h>
-#include <netinet/in.h>
-#include <sys/select.h>
-#include <netdb.h>
-#include <signal.h>
-
 #include "servers.h"
 #include "packet-tools.h"
 #include "logger.h"
+#include "dns.h"
 
 #define SERVER_PORT 25565
 #define MAX_PENDING_CONNECTIONS 256
@@ -27,18 +15,6 @@ void handle_error(const char* error_message) {
     perror(error_message);
     log_error(error_message);
     exit(EXIT_FAILURE);
-}
-
-// Initialize the mutexes
-void mutex_init() {
-    pthread_mutex_init(&loggerMutex, NULL);
-    pthread_mutex_init(&serversMutex, NULL);
-}
-
-// Destroy the mutexes
-void mutex_destroy() {
-    pthread_mutex_destroy(&loggerMutex);
-    pthread_mutex_destroy(&serversMutex);
 }
 
 void log_connect(char *username, int client_socket, char* server_ip_address, char* resolved_address, enum LogConnectionType connection_type) {
@@ -176,11 +152,9 @@ void *handle_client(void *arg) {
         return NULL;
     }
 
-    // Resolve the hostname to an IP address TODO: make thread-safe
-    char* resolved_address = resolve_hostname(entry->destination);
-
-    // Exit if the hostname could not be resolved
-    if (resolved_address == NULL) {
+    // Resolve the hostname to an IP address
+    char resolved_address[16];
+    if (resolve_hostname(entry->destination, resolved_address) != 0) {
         printf("Could not resolve the hostname\n");
         return NULL;
     }
@@ -263,7 +237,6 @@ void sigint_handler(int) {
 
     // Close the server socket
     if (server_socket) close(server_socket);
-    mutex_destroy();
 
     // Exit the program
     exit(EXIT_SUCCESS);
@@ -274,12 +247,20 @@ int main() {
 
     printf("The server proxy is starting\n");
 
-    // Initialize mutexes and logging mechanisms
-    mutex_init();
-    log_init();
+    // Initialize the logging mechanisms
+    if (log_init() != 0) {
+        handle_error("Error initializing the logger");
+    }
+
+    // Initialize the DNS cache
+    if (dns_cache_init(8) != 0) {
+        handle_error("Error initializing the DNS cache");
+    }
 
     // Loads the servers from the config file
-    load_dictionary("servers.conf");
+    if (load_dictionary("servers.conf") != 0) {
+        handle_error("Error loading the servers");
+    }
 
     server_socket = create_and_bind_socket();
 
@@ -290,8 +271,6 @@ int main() {
     listen_and_accept_connections(server_socket);
 
     close(server_socket);
-
-    mutex_destroy();
 
     return EXIT_FAILURE;
 }
